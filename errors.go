@@ -4,22 +4,23 @@ import (
 	"fmt"
 )
 
-// Base binutils error
+// Error type implements error interface and used in package routines.
 type Error struct {
 	formattedString string
 }
 
-// Returns formatted error string as a Stringer
+// Error returns formatted error string. Implements error interface.
 func (e Error) Error() string {
 	return e.formattedString
 }
 
-// Returns formatted error string prefixes with package name and type as a GoStringer
+// GoString returns formatted error string prefixes with package name and type. Implements GoStringer
 func (e Error) GoString() string {
 	return "binutils.Error:" + e.Error()
 }
 
-// Make new error using format strings and interface arguments
+// NewError is a default error constructor.
+// Takes format and arguments to make error description using fmt.Sprintf() formatting rules.
 func NewError(format string, args ...interface{}) error {
 	return &Error{fmt.Sprintf(format, args...)}
 }

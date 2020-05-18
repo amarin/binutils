@@ -44,12 +44,13 @@ type Buffer struct {
 // To make new buffer with predefined data of []byte use:
 //   buffer := binaries.NewBuffer(data)
 func NewBuffer(data []byte) *Buffer {
-	return &Buffer{buffer: bytes.NewBuffer(data)}
+	// create underlying buffer using detached slice
+	return &Buffer{buffer: bytes.NewBuffer(append(make([]byte, 0), data...))}
 }
 
 // NewEmptyBuffer is a shorthand to create new empty Buffer with binaries.NewBuffer([]byte{})
 func NewEmptyBuffer() *Buffer {
-	return &Buffer{buffer: bytes.NewBuffer([]byte{})}
+	return &Buffer{buffer: bytes.NewBuffer(make([]byte, 0))}
 }
 
 // Len returns current length of buffer data in bytes
@@ -59,9 +60,7 @@ func (x *Buffer) Len() int {
 
 // Bytes returns copy of current buffer data []bytes.
 func (x *Buffer) Bytes() []byte {
-	var res []byte
-	_ = copy(res, x.buffer.Bytes())
-	return res
+	return append(make([]byte, 0), x.buffer.Bytes()...)
 }
 
 // WriteUint8 writes uint8 value into buffer as byte.

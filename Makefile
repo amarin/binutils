@@ -4,7 +4,7 @@ PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
 
-.PHONY: all dep build clean test coverage coverhtml lint
+.PHONY: all dep build clean test coverage coverhtml lint tidy
 
 all: build
 
@@ -16,8 +16,12 @@ lint:
 test:
 	@go test -short ${PKG_LIST}
 
+## Tidy go dependencies
+tidy:
+	@go mod tidy
+
 ## Get the dependencies
-dep:
+dep: tidy
 	@go get -v -d ./...
 
 ## Run data race detector

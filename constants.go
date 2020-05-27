@@ -1,6 +1,6 @@
 package binutils
 
-// Some useful constants
+// Some useful constants.
 const (
 	Int64size  = 8 // int64 size in bytes
 	Uint64size = 8 // uint64 size in bytes

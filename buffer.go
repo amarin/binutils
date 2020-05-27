@@ -48,12 +48,15 @@ func (x *Buffer) WriteUint8(data uint8) (int, error) {
 // ReadUint8 translates next byte from buffer into uint8 value and place it into target pointer.
 // Returns nil or error.
 func (x *Buffer) ReadUint8(target *uint8) error {
-	if d, err := x.buffer.ReadByte(); err != nil {
+	d, err := x.buffer.ReadByte()
+
+	if err != nil {
 		return err
-	} else {
-		*target = d
-		return nil
 	}
+
+	*target = d
+
+	return nil
 }
 
 // WriteInt8 writes int8 value into buffer as byte.
@@ -65,12 +68,14 @@ func (x *Buffer) WriteInt8(data int8) (int, error) {
 // ReadInt8 translates next byte from buffer into int8 value and place it into target pointer.
 // Returns nil or error.
 func (x *Buffer) ReadInt8(target *int8) error {
-	if v, err := Int8(x.buffer.Next(Int8size)); err != nil {
+	v, err := Int8(x.buffer.Next(Int8size))
+	if err != nil {
 		return err
-	} else {
-		*target = v
-		return nil
 	}
+
+	*target = v
+
+	return nil
 }
 
 // WriteUint16 writes uint16 value into buffer using big-endian bytes order.
@@ -81,7 +86,7 @@ func (x *Buffer) WriteUint16(data uint16) (int, error) {
 
 // ReadUint16 translates next 2 bytes from buffer into uint16 value and place it into target pointer.
 // It uses big-endian byte order.
-// Returns nil or error
+// Returns nil or error.
 func (x *Buffer) ReadUint16(target *uint16) error {
 	d := AllocateBytes(Uint16size)
 	if consumedBytes, err := x.buffer.Read(d); err != nil {
@@ -104,14 +109,16 @@ func (x *Buffer) WriteInt16(data int16) (int, error) {
 
 // ReadInt16 translates next 2 bytes from buffer into int16 value and place it into target pointer.
 // It uses big-endian byte order.
-// Returns nil or error
+// Returns nil or error.
 func (x *Buffer) ReadInt16(target *int16) error {
-	if v, err := Int16(x.buffer.Next(Int16size)); err != nil {
+	v, err := Int16(x.buffer.Next(Int16size))
+	if err != nil {
 		return err
-	} else {
-		*target = v
-		return nil
 	}
+
+	*target = v
+
+	return nil
 }
 
 // WriteUint32 writes uint32 value into buffer using big-endian bytes order.
@@ -122,7 +129,7 @@ func (x *Buffer) WriteUint32(data uint32) (int, error) {
 
 // ReadUint32 translates next 4 bytes from buffer into uint32 value and place it into target pointer.
 // It uses big-endian byte order.
-// Returns nil or error
+// Returns nil or error.
 func (x *Buffer) ReadUint32(target *uint32) error {
 	d := AllocateBytes(Uint32size)
 	if consumedBytes, err := x.buffer.Read(d); err != nil {
@@ -145,14 +152,16 @@ func (x *Buffer) WriteInt32(data int32) (int, error) {
 
 // ReadInt32 translates next 4 bytes from buffer into int32 value and place it into target pointer.
 // It uses big-endian byte order.
-// Returns nil or error
+// Returns nil or error.
 func (x *Buffer) ReadInt32(target *int32) error {
-	if v, err := Int32(x.buffer.Next(Unt32size)); err != nil {
+	v, err := Int32(x.buffer.Next(Unt32size))
+	if err != nil {
 		return err
-	} else {
-		*target = v
-		return nil
 	}
+
+	*target = v
+
+	return nil
 }
 
 // WriteUint64 writes uint64 value into buffer using big-endian bytes order.
@@ -163,19 +172,27 @@ func (x *Buffer) WriteUint64(data uint64) (int, error) {
 
 // ReadUint64 translates next 4 bytes from buffer into uint64 value and place it into target pointer.
 // It uses big-endian byte order.
-// Returns nil or error
+// Returns nil or error.
 func (x *Buffer) ReadUint64(target *uint64) error {
 	d := AllocateBytes(Uint64size)
-	if consumedBytes, err := x.buffer.Read(d); err != nil {
-		return err
-	} else if Uint64size != consumedBytes {
-		return NewError("Expected %d bytes, only %d consumed", Uint64size, consumedBytes)
-	} else if v, err := Uint64(d); err != nil {
-		return err
-	} else {
-		*target = v
-		return nil
+
+	consumedBytes, err := x.buffer.Read(d)
+	if err != nil {
+		return WrapError(err, "cant read uint64")
 	}
+
+	if Uint64size != consumedBytes {
+		return NewError("Expected %d bytes, only %d consumed", Uint64size, consumedBytes)
+	}
+
+	v, err := Uint64(d)
+	if err != nil {
+		return WrapError(err, "cant decode bytes to uint64")
+	}
+
+	*target = v
+
+	return nil
 }
 
 // WriteInt64 writes int64 value into buffer using big-endian bytes order.
@@ -186,14 +203,16 @@ func (x *Buffer) WriteInt64(data int64) (int, error) {
 
 // ReadInt64 translates next 4 bytes from buffer into int64 value and place it into target pointer.
 // It uses big-endian byte order.
-// Returns nil or error
+// Returns nil or error.
 func (x *Buffer) ReadInt64(target *int64) error {
-	if v, err := Int64(x.buffer.Next(Int64size)); err != nil {
+	v, err := Int64(x.buffer.Next(Int64size))
+	if err != nil {
 		return err
-	} else {
-		*target = v
-		return nil
 	}
+
+	*target = v
+
+	return nil
 }
 
 // WriteString adds binary representation of string as zero-terminated string.
@@ -203,14 +222,19 @@ func (x *Buffer) WriteString(data string) (int, error) {
 
 // ReadString reads zero-terminated string from buffer.
 func (x *Buffer) ReadString(target *string) error {
-	if line, err := x.buffer.ReadBytes(0); err != nil {
-		return err
-	} else if v, err := String(line); err != nil {
-		return err
-	} else {
-		*target = v
-		return nil
+	line, err := x.buffer.ReadBytes(0)
+	if err != nil {
+		return WrapError(err, "cant find line terminating 00")
 	}
+
+	v, err := String(line)
+	if err != nil {
+		return WrapError(err, "cant translate bytes to string")
+	}
+
+	*target = v
+
+	return nil
 }
 
 // WriteBytes adds data from byte slice into buffer.
@@ -220,15 +244,16 @@ func (x *Buffer) WriteBytes(data []byte) (int, error) {
 }
 
 // ReadBytes takes required amount of bytes from buffer into target byte slice pointer.
-// Returns nil or possible error
+// Returns nil or possible error.
 func (x *Buffer) ReadBytes(target *[]byte, numBytes int) error {
 	if x.buffer.Len() < numBytes {
 		return NewError("buffer len %d less then required %d", x.buffer.Len(), numBytes)
-	} else {
-		d := x.buffer.Next(numBytes)
-		*target = append(*target, d...)
-		return nil
 	}
+
+	d := x.buffer.Next(numBytes)
+	*target = append(*target, d...)
+
+	return nil
 }
 
 // WriteObject add encoding.BinaryMarshaler binary data into buffer.
@@ -236,7 +261,7 @@ func (x *Buffer) ReadBytes(target *[]byte, numBytes int) error {
 func (x *Buffer) WriteObject(data encoding.BinaryMarshaler) (int, error) {
 	d, err := data.MarshalBinary()
 	if err != nil {
-		return 0, err
+		return 0, WrapError(err, "cant write object")
 	}
 
 	return x.buffer.Write(d)

@@ -4,6 +4,30 @@ import (
 	"math"
 )
 
+const (
+	// Predefined BitsPerIndex values
+
+	// Use8bit defines size ID for list indexes having no more than 256 values.
+	Use8bit BitsPerIndex = iota // uint8
+	// Use16bit defines size ID for list indexes having no more than 65536 values.
+	Use16bit // uint16
+	// Use32bit defines size ID for list indexes having no more than 4294967296 values.
+	Use32bit // uint32
+	// Use64bit defines size ID for list indexes having no more than 1,8 x 10**19 values.
+	Use64bit // uint64
+
+	// Well-known values to marshal/unmarshal BitsPerIndex as binary:
+
+	// UsingUint8Indexes defines byte value to store as using uint8 indicator.
+	UsingUint8Indexes = uint8(8) // uint8
+	// UsingUint16Indexes defines byte value to store as using uint16 indicator.
+	UsingUint16Indexes = uint8(16) // uint16
+	// UsingUint32Indexes defines byte value to store as using uint32 indicator.
+	UsingUint32Indexes = uint8(32) // uint32
+	// UsingUint64Indexes defines byte value to store as using uint64 indicator.
+	UsingUint64Indexes = uint8(64) // uint64
+)
+
 // BitsPerIndex defines index values size ID for numbered lists.
 // Allows to detect and use minimal required standard type for list indexes when marshalling & unmarshalling.
 // Only uint8 (byte), uint16 (2 bytes), uint32 (4 bytes) and uint64 (8 bytes) supported.
@@ -24,7 +48,7 @@ func (b BitsPerIndex) MarshalBinary() (data []byte, err error) {
 	default:
 		return []byte{}, NewError("unexpected bits per index value `%v`", b)
 	}
-} // nolint:gofmt
+}
 
 // UnmarshalBinary restores BitsPerIndex value from byte sequence.
 // Requires exactly 1 byte with predefined values 8, 16, 32 or 64.
@@ -50,30 +74,6 @@ func (b *BitsPerIndex) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-const (
-	// Predefined BitsPerIndex values
-
-	// Use8bit defines size ID for list indexes having no more than 256 values.
-	Use8bit BitsPerIndex = iota // uint8
-	// Use16bit defines size ID for list indexes having no more than 65536 values.
-	Use16bit // uint16
-	// Use32bit defines size ID for list indexes having no more than 4294967296 values.
-	Use32bit // uint32
-	// Use64bit defines size ID for list indexes having no more than 1,8 x 10**19 values.
-	Use64bit // uint64
-
-	// Well-known values to marshal/unmarshal BitsPerIndex as binary:
-
-	// UsingUint8Indexes defines byte value to store as using uint8 indicator.
-	UsingUint8Indexes = uint8(8) // nolint:gomnd    // uint8
-	// UsingUint16Indexes defines byte value to store as using uint16 indicator.
-	UsingUint16Indexes = uint8(16) // nolint:gomnd    // uint16
-	// UsingUint32Indexes defines byte value to store as using uint32 indicator.
-	UsingUint32Indexes = uint8(32) // nolint:gomnd    // uint32
-	// UsingUint64Indexes defines byte value to store as using uint64 indicator.
-	UsingUint64Indexes = uint8(64) // nolint:gomnd    // uint64
-)
-
 // CalculateUseBitsPerIndex returns required index value size for requested slice length.
 // If reserve not set, calculates size using all possible values.
 // If reserve is true, calculates size using size bounds reserving 1 value
@@ -98,4 +98,68 @@ func CalculateUseBitsPerIndex(sliceLen int, reserveNil bool) (BitsPerIndex, erro
 	default:
 		return Use8bit, nil
 	}
+}
+
+// WriteUint64ToBufferUsingBits writes uint64 value into buffer using only required bits.
+// Returns written bytes count and error if any.
+// Error not nil if value exceeds requested bits width max value.
+func WriteUint64ToBufferUsingBits(value uint64, buffer *Buffer, usingBits BitsPerIndex) (int, error) {
+	switch usingBits {
+	case Use8bit:
+		if value > math.MaxUint8 {
+			return 0, NewError("value %d exceeds max uint8", value)
+		}
+
+		return buffer.WriteUint8(uint8(value))
+	case Use16bit:
+		if value > math.MaxUint16 {
+			return 0, NewError("value %d exceeds max uint16", value)
+		}
+
+		return buffer.WriteUint16(uint16(value))
+	case Use32bit:
+		if value > math.MaxUint32 {
+			return 0, NewError("value %d exceeds max uint32", value)
+		}
+
+		return buffer.WriteUint32(uint32(value))
+	case Use64bit:
+		return buffer.WriteUint64(value)
+	default:
+		return 0, NewError("unexpected indexes size, expected one of 8, 16, 32 or 64 bit set")
+	}
+}
+
+// ReadUint64FromBufferUsingBits reads value of requested bits wide from buffer into target uint64 pointer.
+// Error will not not nil if unexpected bit width specified or read from buffer failed.
+func ReadUint64FromBufferUsingBits(target *uint64, buffer *Buffer, usingBits BitsPerIndex) error {
+	switch usingBits {
+	case Use8bit:
+		var value uint8
+		if err := buffer.ReadUint8(&value); err != nil {
+			return WrapError(err, "cant read byte from buffer")
+		}
+
+		*target = uint64(value)
+	case Use16bit:
+		var value uint16
+		if err := buffer.ReadUint16(&value); err != nil {
+			return WrapError(err, "cant read uint16 from buffer")
+		}
+
+		*target = uint64(value)
+	case Use32bit:
+		var value uint32
+		if err := buffer.ReadUint32(&value); err != nil {
+			return WrapError(err, "cant read uint32 from buffer")
+		}
+
+		*target = uint64(value)
+	case Use64bit:
+		return buffer.ReadUint64(target)
+	default:
+		return NewError("unexpected indexes size, expected one of 8, 16, 32 or 64 bit set")
+	}
+
+	return nil
 }

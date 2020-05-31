@@ -98,3 +98,99 @@ func TestBitsPerIndex_UnmarshalBinary(t *testing.T) {
 		})
 	}
 }
+
+func TestWriteUint64ToBufferUsingBits(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		value      uint64
+		usingBits  binutils.BitsPerIndex
+		expectData string
+		want       int
+		wantErr    bool
+	}{
+		{"uint8",
+			math.MaxUint8, binutils.Use8bit, "ff",
+			binutils.Uint8size, false},
+		{"uint8_overflow",
+			math.MaxUint8 + 1, binutils.Use8bit, "",
+			0, true},
+		{"uint16",
+			math.MaxUint16, binutils.Use16bit, "ffff",
+			binutils.Uint16size, false},
+		{"uint16_overflow",
+			math.MaxUint16 + 1, binutils.Use16bit, "",
+			0, true},
+		{"uint32",
+			math.MaxUint32, binutils.Use32bit, "ffffffff",
+			binutils.Uint32size, false},
+		{"uint32_overflow",
+			math.MaxUint32 + 1, binutils.Use32bit, "",
+			0, true},
+		{"uint64",
+			math.MaxUint32 + 1, binutils.Use64bit, "0000000100000000",
+			8, false},
+	} {
+		tt := tt // pin tt
+		t.Run(tt.name, func(t *testing.T) {
+			tt := tt // pin tt
+			buffer := binutils.NewEmptyBuffer()
+			bytesWritten, err := binutils.WriteUint64ToBufferUsingBits(tt.value, buffer, tt.usingBits)
+
+			switch {
+			case (err != nil) != tt.wantErr:
+				t.Fatalf("WriteUint64ToBufferUsingBits() error = %v, wantErr %v", err, tt.wantErr)
+			case err != nil:
+				return
+			case bytesWritten != tt.want:
+				t.Fatalf("WriteUint64ToBufferUsingBits() bytesWritten = %v, want %v", bytesWritten, tt.want)
+			}
+
+			if buffer.Hex() != tt.expectData {
+				t.Fatalf("expected data:\n\t%v\ngot data:\n\t%v", tt.expectData, buffer.Hex())
+			}
+		})
+	}
+}
+
+func TestReadUint64FromBufferUsingBits(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		value      uint64
+		usingBits  binutils.BitsPerIndex
+		expectData string
+		want       int
+		wantErr    bool
+	}{
+		{"uint8",
+			math.MaxUint8, binutils.Use8bit, "ff",
+			binutils.Uint8size, false},
+		{"uint16",
+			math.MaxUint16, binutils.Use16bit, "ffff",
+			binutils.Uint16size, false},
+		{"uint32",
+			math.MaxUint32, binutils.Use32bit, "ffffffff",
+			binutils.Uint32size, false},
+		{"uint64",
+			math.MaxUint32 + 1, binutils.Use64bit, "0000000100000000",
+			8, false},
+	} {
+		tt := tt // pin tt
+		t.Run(tt.name, func(t *testing.T) {
+			tt := tt // pin tt
+			buffer := binutils.NewEmptyBuffer()
+			if _, err := buffer.WriteHex(tt.expectData); err != nil {
+				t.Fatalf("cant prepare buffer data: %v", err)
+			}
+			var target uint64
+			err := binutils.ReadUint64FromBufferUsingBits(&target, buffer, tt.usingBits)
+			switch {
+			case (err != nil) != tt.wantErr:
+				t.Fatalf("ReadUint64FromBufferUsingBits() error = %v, wantErr %v", err, tt.wantErr)
+			case err != nil:
+				return
+			case target != tt.value:
+				t.Fatalf("ReadUint64FromBufferUsingBits() takes %d instead of %d", target, tt.value)
+			}
+		})
+	}
+}

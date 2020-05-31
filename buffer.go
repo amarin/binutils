@@ -3,6 +3,7 @@ package binutils
 import (
 	"bytes"
 	"encoding"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 )
@@ -254,6 +255,38 @@ func (x *Buffer) ReadBytes(target *[]byte, numBytes int) error {
 	*target = append(*target, d...)
 
 	return nil
+}
+
+// WriteHex adds data defined by hex string into buffer.
+// Returns written bytes count and nil or possible error.
+func (x *Buffer) WriteHex(hexString string) (int, error) {
+	data, err := hex.DecodeString(hexString)
+	if err != nil {
+		return 0, WrapError(err, "cant decode hex string")
+	}
+
+	return x.WriteBytes(data)
+}
+
+// ReadHex takes requested amount bytes and places result into hexadecimal string pointer.
+// Returns nil or possible error.
+func (x *Buffer) ReadHex(target *string, numBytes int) error {
+	if x.buffer.Len() < numBytes {
+		return NewError("buffer len %d less then required %d", x.buffer.Len(), numBytes)
+	}
+
+	d := x.buffer.Next(numBytes)
+
+	*target = hex.EncodeToString(d)
+
+	return nil
+}
+
+// Hex returns current buffer data as hexadecimal string.
+// Does not changes buffer content.
+// Returns nil or possible error.
+func (x *Buffer) Hex() string {
+	return hex.EncodeToString(x.Bytes())
 }
 
 // WriteObject add encoding.BinaryMarshaler binary data into buffer.

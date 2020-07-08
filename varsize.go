@@ -15,17 +15,25 @@ const (
 	Use32bit // uint32
 	// Use64bit defines size ID for list indexes having no more than 1,8 x 10**19 values.
 	Use64bit // uint64
-
 	// Well-known values to marshal/unmarshal BitsPerIndex as binary:
-
+	// bitsPerByte defines byte size in bits.
+	bitsPerByte = 8
+	// BytesInUint8 defines bytes amount required to store uint16 values.
+	BytesInUint8 = 1
+	// BytesInUint16 defines bytes amount required to store uint16 values.
+	BytesInUint16 = 2
+	// BytesInUint32 defines bytes amount required to store uint32 values.
+	BytesInUint32 = 4
+	// BytesInUint32 defines bytes amount required to store uint32 values.
+	BytesInUint64 = 8
 	// UsingUint8Indexes defines byte value to store as using uint8 indicator.
-	UsingUint8Indexes = uint8(8) // uint8
+	UsingUint8Indexes = uint8(BytesInUint8 * bitsPerByte) // uint8
 	// UsingUint16Indexes defines byte value to store as using uint16 indicator.
-	UsingUint16Indexes = uint8(16) // uint16
+	UsingUint16Indexes = uint8(BytesInUint16 * bitsPerByte) // uint16
 	// UsingUint32Indexes defines byte value to store as using uint32 indicator.
-	UsingUint32Indexes = uint8(32) // uint32
+	UsingUint32Indexes = uint8(BytesInUint32 * bitsPerByte) // uint32
 	// UsingUint64Indexes defines byte value to store as using uint64 indicator.
-	UsingUint64Indexes = uint8(64) // uint64
+	UsingUint64Indexes = uint8(BytesInUint64 * bitsPerByte) // uint64
 )
 
 // BitsPerIndex defines index values size ID for numbered lists.

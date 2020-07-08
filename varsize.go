@@ -5,8 +5,6 @@ import (
 )
 
 const (
-	// Predefined BitsPerIndex values
-
 	// Use8bit defines size ID for list indexes having no more than 256 values.
 	Use8bit BitsPerIndex = iota // uint8
 	// Use16bit defines size ID for list indexes having no more than 65536 values.
@@ -40,6 +38,30 @@ const (
 // Allows to detect and use minimal required standard type for list indexes when marshalling & unmarshalling.
 // Only uint8 (byte), uint16 (2 bytes), uint32 (4 bytes) and uint64 (8 bytes) supported.
 type BitsPerIndex int
+
+// UnmarshalFromBuffer takes byte value from buffer and translates it into correct BitsPerIndex constant.
+// Implements BufferUnmarshaler.
+func (b *BitsPerIndex) UnmarshalFromBuffer(buffer *Buffer) error {
+	b0 := new(uint8)
+	if err := buffer.ReadUint8(b0); err != nil {
+		return err
+	}
+
+	switch *b0 {
+	case UsingUint8Indexes:
+		*b = Use8bit
+	case UsingUint16Indexes:
+		*b = Use16bit
+	case UsingUint32Indexes:
+		*b = Use32bit
+	case UsingUint64Indexes:
+		*b = Use64bit
+	default:
+		return NewError("unexpected size byte %d", b0)
+	}
+
+	return nil
+}
 
 // MarshalBinary makes a byte representation of known type BitsPerIndex int constant.
 // Returns 1 byte with 8, 16, 32 or 64 value or error if unknown BitsPerIndex marshalled.

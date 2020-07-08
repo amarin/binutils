@@ -194,3 +194,33 @@ func TestReadUint64FromBufferUsingBits(t *testing.T) {
 		})
 	}
 }
+
+func TestBitsPerIndex_UnmarshalFromBuffer(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		b        binutils.BitsPerIndex
+		wantData []byte
+		wantErr  bool
+	}{
+		{"uint8", binutils.Use8bit, []byte{binutils.UsingUint8Indexes}, false},
+		{"uint16", binutils.Use16bit, []byte{binutils.UsingUint16Indexes}, false},
+		{"uint32", binutils.Use32bit, []byte{binutils.UsingUint32Indexes}, false},
+		{"uint64", binutils.Use64bit, []byte{binutils.UsingUint64Indexes}, false},
+		{"uint9_error", binutils.BitsPerIndex(0), []byte{9}, true},
+		{"uint17_error", binutils.BitsPerIndex(0), []byte{17}, true},
+		{"uint33_error", binutils.BitsPerIndex(0), []byte{33}, true},
+		{"uint65_error", binutils.BitsPerIndex(0), []byte{65}, true},
+	} {
+		tt := tt // pin tt
+		t.Run(tt.name, func(t *testing.T) {
+			tt := tt // pin tt
+			bitsPerIndex := new(binutils.BitsPerIndex)
+			buffer := binutils.NewBuffer(tt.wantData)
+			if err := bitsPerIndex.UnmarshalFromBuffer(buffer); (err != nil) != tt.wantErr {
+				t.Fatalf("UnmarshalFromBuffer() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil && *bitsPerIndex != tt.b {
+				t.Errorf("UnmarshalFromBuffer() unmarshals = %#v, want %#v", *bitsPerIndex, tt.b)
+			}
+		})
+	}
+}

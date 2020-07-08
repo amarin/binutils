@@ -22,7 +22,7 @@ const (
 	BytesInUint16 = 2
 	// BytesInUint32 defines bytes amount required to store uint32 values.
 	BytesInUint32 = 4
-	// BytesInUint32 defines bytes amount required to store uint32 values.
+	// BytesInUint64 defines bytes amount required to store uint32 values.
 	BytesInUint64 = 8
 	// UsingUint8Indexes defines byte value to store as using uint8 indicator.
 	UsingUint8Indexes = uint8(BytesInUint8 * bitsPerByte) // uint8

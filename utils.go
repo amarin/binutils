@@ -3,6 +3,7 @@ package binutils
 // Utility functions to translate native types into bytes sequence and vise versa.
 import (
 	"encoding/binary"
+	"fmt"
 )
 
 // AllocateBytes creates a byte slice of required size.
@@ -14,7 +15,7 @@ func AllocateBytes(size int) []byte {
 // Returns error if insufficient bytes in buffer.
 func Uint8(data []byte) (uint8, error) {
 	if len(data) != Uint8size {
-		return 0, NewError("Expected %d bytes", Uint8size)
+		return 0, ErrExpected1byte
 	}
 
 	return data[0], nil
@@ -24,7 +25,7 @@ func Uint8(data []byte) (uint8, error) {
 // Returns error if insufficient bytes in buffer.
 func Int8(data []byte) (int8, error) {
 	if len(data) != Int8size {
-		return 0, NewError("Expected %d bytes", Int8size)
+		return 0, ErrExpected1byte
 	}
 
 	return int8(data[0]), nil
@@ -34,7 +35,7 @@ func Int8(data []byte) (int8, error) {
 // Returns error if insufficient bytes in buffer.
 func Uint16(data []byte) (uint16, error) {
 	if len(data) != Uint16size {
-		return 0, NewError("Expected %d bytes", Uint16size)
+		return 0, ErrExpected2bytes
 	}
 
 	return binary.BigEndian.Uint16(data), nil
@@ -44,7 +45,7 @@ func Uint16(data []byte) (uint16, error) {
 // Returns error if insufficient bytes in buffer.
 func Int16(data []byte) (int16, error) {
 	if len(data) != Int16size {
-		return 0, NewError("Expected %d bytes", Int16size)
+		return 0, ErrExpected2bytes
 	}
 
 	return int16(binary.BigEndian.Uint16(data)), nil
@@ -54,7 +55,7 @@ func Int16(data []byte) (int16, error) {
 // Returns error if insufficient bytes in buffer.
 func Uint32(data []byte) (uint32, error) {
 	if len(data) != Uint32size {
-		return 0, NewError("Expected %d bytes", Uint32size)
+		return 0, ErrExpected4bytes
 	}
 
 	return binary.BigEndian.Uint32(data), nil
@@ -64,7 +65,7 @@ func Uint32(data []byte) (uint32, error) {
 // Returns error if insufficient bytes in buffer.
 func Int32(data []byte) (int32, error) {
 	if len(data) != Unt32size {
-		return 0, NewError("Expected %d bytes", Unt32size)
+		return 0, ErrExpected4bytes
 	}
 
 	return int32(binary.BigEndian.Uint32(data)), nil
@@ -74,7 +75,7 @@ func Int32(data []byte) (int32, error) {
 // Returns error if insufficient bytes in buffer.
 func Uint64(data []byte) (uint64, error) {
 	if len(data) != Uint64size {
-		return 0, NewError("Expected %d bytes", Uint64size)
+		return 0, ErrExpected8bytes
 	}
 
 	return binary.BigEndian.Uint64(data), nil
@@ -84,7 +85,7 @@ func Uint64(data []byte) (uint64, error) {
 // Returns error if insufficient bytes in buffer.
 func Int64(data []byte) (int64, error) {
 	if len(data) != Int64size {
-		return 0, NewError("Expected %d bytes", Int64size)
+		return 0, ErrExpected8bytes
 	}
 
 	return int64(binary.BigEndian.Uint64(data)), nil

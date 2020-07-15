@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/amarin/binutils"
+	. "github.com/amarin/binutils"
 )
 
 func TestNewEmptyBuffer(t *testing.T) {
-	got := binutils.NewEmptyBuffer()
+	got := NewEmptyBuffer()
 	if got.Len() != 0 {
 		t.Error("NewEmptyBuffer() makes non-empty buffer")
 	}
@@ -27,7 +27,7 @@ func TestNewBuffer(t *testing.T) {
 		tt := tt // pin tt
 		t.Run(tt.name, func(t *testing.T) {
 			tt := tt // pin tt again
-			if got := binutils.NewBuffer(tt.data); got.Len() != tt.expectLen {
+			if got := NewBuffer(tt.data); got.Len() != tt.expectLen {
 				t.Errorf("NewBuffer() buffer len mismatch %d != %d", got.Len(), tt.expectLen)
 			}
 		})
@@ -46,7 +46,7 @@ func TestBuffer_Bytes(t *testing.T) {
 		tt := tt // pin tt
 		t.Run(tt.name, func(t *testing.T) {
 			tt := tt // pin tt again
-			x := binutils.NewBuffer(tt.want)
+			x := NewBuffer(tt.want)
 			if got := x.Bytes(); len(got) != len(tt.want) { //
 				t.Errorf("slice len mismatch, got %d expected %d in %v", len(got), len(tt.want), got)
 			}
@@ -57,13 +57,13 @@ func TestBuffer_Bytes(t *testing.T) {
 func TestBuffer_Hex(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
-		buffer *binutils.Buffer
+		buffer *Buffer
 		want   string
 	}{
-		{"empty_buffer", binutils.NewEmptyBuffer(), ""},
-		{"single_byte", binutils.NewBuffer([]byte{1}), "01"},
-		{"couple_of_bytes", binutils.NewBuffer([]byte{1, 1}), "0101"},
-		{"three_of_bytes", binutils.NewBuffer([]byte{1, 1, 255}), "0101ff"},
+		{"empty_buffer", NewEmptyBuffer(), ""},
+		{"single_byte", NewBuffer([]byte{1}), "01"},
+		{"couple_of_bytes", NewBuffer([]byte{1, 1}), "0101"},
+		{"three_of_bytes", NewBuffer([]byte{1, 1, 255}), "0101ff"},
 	} {
 		tt := tt // pin tt
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestBuffer_WriteHex(t *testing.T) {
 		tt := tt // pin tt
 		t.Run(tt.hexString, func(t *testing.T) {
 			tt := tt // pin tt
-			x := binutils.NewEmptyBuffer()
+			x := NewEmptyBuffer()
 			got, err := x.WriteHex(tt.hexString)
 			switch {
 			case (err != nil) != tt.wantErr:
@@ -122,7 +122,7 @@ func TestBuffer_ReadHex(t *testing.T) {
 		tt := tt // pin tt
 		t.Run(tt.hexString, func(t *testing.T) {
 			tt := tt // pin tt
-			buffer := binutils.NewEmptyBuffer()
+			buffer := NewEmptyBuffer()
 			if _, err := buffer.WriteHex(tt.hexString); err != nil {
 				t.Fatalf("cant prepare test data: %v", err)
 			}

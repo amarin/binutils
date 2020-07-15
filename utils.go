@@ -99,7 +99,7 @@ func Int8bytes(data int8) []byte { return []byte{uint8(data)} }
 
 // Uint16bytes adds uint16 data to buffer using big-endian bytes order.
 func Uint16bytes(data uint16) []byte {
-	d := AllocateBytes(2)
+	d := AllocateBytes(Int16size)
 	binary.BigEndian.PutUint16(d, data)
 
 	return d
@@ -115,7 +115,7 @@ func Int16bytes(data int16) []byte {
 
 // Uint32bytes adds uint32 data to buffer using big-endian bytes order.
 func Uint32bytes(data uint32) []byte {
-	d := AllocateBytes(4)
+	d := AllocateBytes(Uint32size)
 	binary.BigEndian.PutUint32(d, data)
 
 	return d

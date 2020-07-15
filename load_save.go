@@ -2,6 +2,7 @@ package binutils
 
 import (
 	"encoding"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -10,26 +11,26 @@ import (
 func SaveBinary(filename string, dict encoding.BinaryMarshaler) error {
 	absFileName, err := filepath.Abs(filename)
 	if err != nil {
-		return WrapError(err, "cant detect absolute path")
+		return err
 	}
 	// prepare writer
 	writer, err := os.Create(absFileName)
 	if err != nil {
-		return WrapError(err, "cant open file for writing")
+		return err
 	}
 	// marshal data
 	data, err := dict.MarshalBinary()
 	if err != nil {
-		return WrapError(err, "cant marshal data")
+		return err
 	}
 	// write data
 	written, err := writer.Write(data)
 	if err != nil {
-		return WrapError(err, "cant write data")
+		return err
 	}
 	// check all data written
 	if written != len(data) {
-		return NewError("written only %d bytes of %d", written, len(data))
+		return fmt.Errorf("%w: written %d of %d", ErrMissedData, written, len(data))
 	}
 	// return ok
 	return nil
@@ -42,11 +43,11 @@ func LoadBinary(filename string, dict BufferUnmarshaler) error {
 	if bytesLoaded, err := buffer.LoadFromFilePath(filename); err != nil {
 		return err
 	} else if bytesLoaded == 0 {
-		return NewError("loaded %d bytes, cant unmarshal", bytesLoaded)
+		return fmt.Errorf("%w: loaded 0", ErrMissedData)
 	} else if err := dict.UnmarshalFromBuffer(buffer); err != nil {
 		return err
 	} else if buffer.Len() != 0 {
-		return NewError("consumed %d bytes, %d bytes rest", bytesLoaded-buffer.Len(), buffer.Len())
+		return fmt.Errorf("%w: %d consumed, %d rest", ErrExtraData, bytesLoaded-buffer.Len(), buffer.Len())
 	}
 
 	return nil

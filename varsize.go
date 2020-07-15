@@ -1,6 +1,7 @@
 package binutils
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -57,7 +58,7 @@ func (b *BitsPerIndex) UnmarshalFromBuffer(buffer *Buffer) error {
 	case UsingUint64Indexes:
 		*b = Use64bit
 	default:
-		return NewError("unexpected size byte %d", b0)
+		return fmt.Errorf("%w: %d", ErrSizing, b0)
 	}
 
 	return nil
@@ -76,7 +77,7 @@ func (b BitsPerIndex) MarshalBinary() (data []byte, err error) {
 	case Use64bit:
 		return []byte{UsingUint64Indexes}, nil
 	default:
-		return []byte{}, NewError("unexpected bits per index value `%v`", b)
+		return []byte{}, fmt.Errorf("%w: %d", ErrSizing, b)
 	}
 }
 
@@ -85,7 +86,7 @@ func (b BitsPerIndex) MarshalBinary() (data []byte, err error) {
 // Returns error if unexpected value supplied or data length not equals 1.
 func (b *BitsPerIndex) UnmarshalBinary(data []byte) error {
 	if len(data) > 1 {
-		return NewError("expected 1 byte, not %d", len(data))
+		return fmt.Errorf("%w: got %d", ErrExpected1, len(data))
 	}
 
 	switch data[0] {
@@ -98,7 +99,7 @@ func (b *BitsPerIndex) UnmarshalBinary(data []byte) error {
 	case UsingUint64Indexes:
 		*b = Use64bit
 	default:
-		return NewError("unexpected size byte %d", data[0])
+		return fmt.Errorf("%w: %d", ErrSizing, data[0])
 	}
 
 	return nil
@@ -116,9 +117,9 @@ func CalculateUseBitsPerIndex(sliceLen int, reserveNil bool) (BitsPerIndex, erro
 
 	switch {
 	case sliceLen < 0:
-		return Use8bit, NewError("cant detect required size by negative len %d", sliceLen)
+		return Use8bit, fmt.Errorf("%w: %d", ErrNegativeLen, sliceLen)
 	case uint64(sliceLen) > math.MaxUint64-uint64(reserveValueForNil):
-		return Use64bit, NewError("len %d too big even for uint64", sliceLen)
+		return Use64bit, fmt.Errorf("%w: uint64 size < %d", ErrOverflowBy, sliceLen)
 	case sliceLen > math.MaxUint32-reserveValueForNil:
 		return Use64bit, nil
 	case sliceLen > math.MaxUint16-reserveValueForNil:
@@ -137,26 +138,26 @@ func WriteUint64ToBufferUsingBits(value uint64, buffer *Buffer, usingBits BitsPe
 	switch usingBits {
 	case Use8bit:
 		if value > math.MaxUint8 {
-			return 0, NewError("value %d exceeds max uint8", value)
+			return 0, fmt.Errorf("%w: uint8 < %d", ErrOverflowBy, value)
 		}
 
 		return buffer.WriteUint8(uint8(value))
 	case Use16bit:
 		if value > math.MaxUint16 {
-			return 0, NewError("value %d exceeds max uint16", value)
+			return 0, fmt.Errorf("%w: uint16 < %d", ErrOverflowBy, value)
 		}
 
 		return buffer.WriteUint16(uint16(value))
 	case Use32bit:
 		if value > math.MaxUint32 {
-			return 0, NewError("value %d exceeds max uint32", value)
+			return 0, fmt.Errorf("%w: uint32 < %d", ErrOverflowBy, value)
 		}
 
 		return buffer.WriteUint32(uint32(value))
 	case Use64bit:
 		return buffer.WriteUint64(value)
 	default:
-		return 0, NewError("unexpected indexes size, expected one of 8, 16, 32 or 64 bit set")
+		return 0, fmt.Errorf("%w: %d", ErrSizing, usingBits)
 	}
 }
 
@@ -167,28 +168,28 @@ func ReadUint64FromBufferUsingBits(target *uint64, buffer *Buffer, usingBits Bit
 	case Use8bit:
 		var value uint8
 		if err := buffer.ReadUint8(&value); err != nil {
-			return WrapError(err, "cant read byte from buffer")
+			return fmt.Errorf("%w: %v", ErrBuffer, err)
 		}
 
 		*target = uint64(value)
 	case Use16bit:
 		var value uint16
 		if err := buffer.ReadUint16(&value); err != nil {
-			return WrapError(err, "cant read uint16 from buffer")
+			return fmt.Errorf("%w: %v", ErrBuffer, err)
 		}
 
 		*target = uint64(value)
 	case Use32bit:
 		var value uint32
 		if err := buffer.ReadUint32(&value); err != nil {
-			return WrapError(err, "cant read uint32 from buffer")
+			return fmt.Errorf("%w: %v", ErrBuffer, err)
 		}
 
 		*target = uint64(value)
 	case Use64bit:
 		return buffer.ReadUint64(target)
 	default:
-		return NewError("unexpected indexes size, expected one of 8, 16, 32 or 64 bit set")
+		return fmt.Errorf("%w: %d", ErrSizing, usingBits)
 	}
 
 	return nil

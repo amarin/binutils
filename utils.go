@@ -15,7 +15,7 @@ func AllocateBytes(size int) []byte {
 // Returns error if insufficient bytes in buffer.
 func Uint8(data []byte) (uint8, error) {
 	if len(data) != Uint8size {
-		return 0, ErrExpected1byte
+		return 0, ErrExpected1
 	}
 
 	return data[0], nil
@@ -25,7 +25,7 @@ func Uint8(data []byte) (uint8, error) {
 // Returns error if insufficient bytes in buffer.
 func Int8(data []byte) (int8, error) {
 	if len(data) != Int8size {
-		return 0, ErrExpected1byte
+		return 0, ErrExpected1
 	}
 
 	return int8(data[0]), nil
@@ -35,7 +35,7 @@ func Int8(data []byte) (int8, error) {
 // Returns error if insufficient bytes in buffer.
 func Uint16(data []byte) (uint16, error) {
 	if len(data) != Uint16size {
-		return 0, ErrExpected2bytes
+		return 0, ErrExpected2
 	}
 
 	return binary.BigEndian.Uint16(data), nil
@@ -45,7 +45,7 @@ func Uint16(data []byte) (uint16, error) {
 // Returns error if insufficient bytes in buffer.
 func Int16(data []byte) (int16, error) {
 	if len(data) != Int16size {
-		return 0, ErrExpected2bytes
+		return 0, ErrExpected2
 	}
 
 	return int16(binary.BigEndian.Uint16(data)), nil
@@ -55,7 +55,7 @@ func Int16(data []byte) (int16, error) {
 // Returns error if insufficient bytes in buffer.
 func Uint32(data []byte) (uint32, error) {
 	if len(data) != Uint32size {
-		return 0, ErrExpected4bytes
+		return 0, ErrExpected4
 	}
 
 	return binary.BigEndian.Uint32(data), nil
@@ -65,7 +65,7 @@ func Uint32(data []byte) (uint32, error) {
 // Returns error if insufficient bytes in buffer.
 func Int32(data []byte) (int32, error) {
 	if len(data) != Unt32size {
-		return 0, ErrExpected4bytes
+		return 0, ErrExpected4
 	}
 
 	return int32(binary.BigEndian.Uint32(data)), nil
@@ -75,7 +75,7 @@ func Int32(data []byte) (int32, error) {
 // Returns error if insufficient bytes in buffer.
 func Uint64(data []byte) (uint64, error) {
 	if len(data) != Uint64size {
-		return 0, ErrExpected8bytes
+		return 0, ErrExpected8
 	}
 
 	return binary.BigEndian.Uint64(data), nil
@@ -85,7 +85,7 @@ func Uint64(data []byte) (uint64, error) {
 // Returns error if insufficient bytes in buffer.
 func Int64(data []byte) (int64, error) {
 	if len(data) != Int64size {
-		return 0, ErrExpected8bytes
+		return 0, ErrExpected8
 	}
 
 	return int64(binary.BigEndian.Uint64(data)), nil
@@ -153,9 +153,9 @@ func StringBytes(s string) []byte { return append([]byte(s), 0) }
 func String(data []byte) (string, error) {
 	switch {
 	case len(data) == 0:
-		return "", fmt.Errorf("0-terminated string: %w", ErrExpectedAtLeast1Byte)
+		return "", fmt.Errorf("0-terminated string: %w", ErrMinimum1)
 	case data[len(data)-1] != 0:
-		return "", ErrRequiredZeroTerminatedString
+		return "", ErrRequired0T
 	default:
 		return string(data[:len(data)-1]), nil
 	}

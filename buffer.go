@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -93,7 +94,7 @@ func (x *Buffer) ReadUint16(target *uint16) error {
 	if consumedBytes, err := x.buffer.Read(d); err != nil {
 		return err
 	} else if Uint16size != consumedBytes {
-		return NewError("Expected %d bytes, only %d consumed", Uint16size, consumedBytes)
+		return fmt.Errorf("%w: only %d consumed", ErrExpected2, consumedBytes)
 	} else if v, err := Uint16(d); err != nil {
 		return err
 	} else {
@@ -136,7 +137,7 @@ func (x *Buffer) ReadUint32(target *uint32) error {
 	if consumedBytes, err := x.buffer.Read(d); err != nil {
 		return err
 	} else if Uint32size != consumedBytes {
-		return NewError("Expected %d bytes, only %d consumed", Uint32size, consumedBytes)
+		return fmt.Errorf("%w: only %d consumed", ErrExpected4, consumedBytes)
 	} else if v, err := Uint32(d); err != nil {
 		return err
 	} else {
@@ -179,16 +180,16 @@ func (x *Buffer) ReadUint64(target *uint64) error {
 
 	consumedBytes, err := x.buffer.Read(d)
 	if err != nil {
-		return WrapError(err, "cant read uint64")
+		return err
 	}
 
 	if Uint64size != consumedBytes {
-		return NewError("Expected %d bytes, only %d consumed", Uint64size, consumedBytes)
+		return fmt.Errorf("%w: only %d consumed", ErrExpected8, consumedBytes)
 	}
 
 	v, err := Uint64(d)
 	if err != nil {
-		return WrapError(err, "cant decode bytes to uint64")
+		return fmt.Errorf("%w: uint64: %v", ErrDecodeTo, err)
 	}
 
 	*target = v
@@ -225,12 +226,12 @@ func (x *Buffer) WriteString(data string) (int, error) {
 func (x *Buffer) ReadString(target *string) error {
 	line, err := x.buffer.ReadBytes(0)
 	if err != nil {
-		return WrapError(err, "cant find line terminating 00")
+		return ErrRequired0T
 	}
 
 	v, err := String(line)
 	if err != nil {
-		return WrapError(err, "cant translate bytes to string")
+		return fmt.Errorf("%w: string: %v", ErrDecodeTo, err)
 	}
 
 	*target = v
@@ -248,7 +249,7 @@ func (x *Buffer) WriteBytes(data []byte) (int, error) {
 // Returns nil or possible error.
 func (x *Buffer) ReadBytes(target *[]byte, numBytes int) error {
 	if x.buffer.Len() < numBytes {
-		return NewError("buffer len %d less then required %d", x.buffer.Len(), numBytes)
+		return fmt.Errorf("%w: only %d of %d", ErrMissedData, x.buffer.Len(), numBytes)
 	}
 
 	d := x.buffer.Next(numBytes)
@@ -262,7 +263,7 @@ func (x *Buffer) ReadBytes(target *[]byte, numBytes int) error {
 func (x *Buffer) WriteHex(hexString string) (int, error) {
 	data, err := hex.DecodeString(hexString)
 	if err != nil {
-		return 0, WrapError(err, "cant decode hex string")
+		return 0, fmt.Errorf("%w: hex: %v", ErrDecodeTo, err)
 	}
 
 	return x.WriteBytes(data)
@@ -272,7 +273,7 @@ func (x *Buffer) WriteHex(hexString string) (int, error) {
 // Returns nil or possible error.
 func (x *Buffer) ReadHex(target *string, numBytes int) error {
 	if x.buffer.Len() < numBytes {
-		return NewError("buffer len %d less then required %d", x.buffer.Len(), numBytes)
+		return fmt.Errorf("%w: only %d of %d", ErrMissedData, x.buffer.Len(), numBytes)
 	}
 
 	d := x.buffer.Next(numBytes)
@@ -294,7 +295,7 @@ func (x *Buffer) Hex() string {
 func (x *Buffer) WriteObject(data encoding.BinaryMarshaler) (int, error) {
 	d, err := data.MarshalBinary()
 	if err != nil {
-		return 0, WrapError(err, "cant write object")
+		return 0, err
 	}
 
 	return x.buffer.Write(d)
@@ -307,11 +308,11 @@ func (x *Buffer) ReadObjectBytes(data encoding.BinaryUnmarshaler, bytes int) err
 	var objectBytes []byte
 
 	if x.buffer.Len() < bytes {
-		return NewError("required %d bytes, buffer len %d", bytes, x.buffer.Len())
+		return fmt.Errorf("%w: only %d of %d", ErrMissedData, bytes, x.buffer.Len())
 	} else if err := x.ReadBytes(&objectBytes, bytes); err != nil {
-		return WrapError(err, "cant read %d bytes", bytes)
+		return fmt.Errorf("%w: %d bytes: %v", ErrRead, bytes, err)
 	} else if err := data.UnmarshalBinary(objectBytes); err != nil {
-		return WrapError(err, "cant unmarshal %T", data)
+		return fmt.Errorf("%w: %T: %v", ErrDecodeTo, data, err)
 	}
 
 	return nil
@@ -345,26 +346,26 @@ func (x *Buffer) UnmarshalBinary(data []byte) error {
 func (x *Buffer) LoadFromFilePath(filePath string) (int, error) {
 	absFileName, err := filepath.Abs(filePath)
 	if err != nil {
-		return 0, WrapError(err, "cant detect absolute file path")
+		return 0, fmt.Errorf("%w: %v", ErrBuffer, err)
 	}
 	// stat file
 	state, err := os.Stat(absFileName)
 	if err != nil {
-		return 0, WrapError(err, "cant stat file path")
+		return 0, fmt.Errorf("%w: %v", ErrBuffer, err)
 	}
 
 	reader, err := os.Open(absFileName)
 	if err != nil {
-		return 0, WrapError(err, "cant open file for reading")
+		return 0, err
 	}
 
 	bytesRed, err := x.buffer.ReadFrom(reader)
 	if err != nil {
-		return 0, WrapError(err, "cant read file")
+		return 0, fmt.Errorf("%w: %v", ErrBuffer, err)
 	}
 
 	if bytesRed != state.Size() {
-		return int(bytesRed), NewError("red only %d bytes of %d", bytesRed, state.Size())
+		return int(bytesRed), fmt.Errorf("%w: only %d of %d", ErrMissedData, bytesRed, state.Size())
 	}
 
 	return int(bytesRed), nil

@@ -141,6 +141,7 @@ func Uint64bytes(data uint64) []byte {
 func Int64bytes(data int64) []byte {
 	d := AllocateBytes(Uint64size)
 	binary.BigEndian.PutUint64(d, uint64(data))
+
 	return d
 }
 
@@ -150,11 +151,12 @@ func StringBytes(s string) []byte { return append([]byte(s), 0) }
 // String reads a zero-terminated string from []byte sequence
 // Returns error if last byte is not 0.
 func String(data []byte) (string, error) {
-	if len(data) == 0 {
-		return "", NewError("required at least 1 byte for 0-terminated string")
-	} else if data[len(data)-1] != 0 {
-		return "", NewError("required 0-terminated string")
-	} else {
+	switch {
+	case len(data) == 0:
+		return "", fmt.Errorf("0-terminated string: %w", ErrExpectedAtLeast1Byte)
+	case data[len(data)-1] != 0:
+		return "", ErrRequiredZeroTerminatedString
+	default:
 		return string(data[:len(data)-1]), nil
 	}
 }

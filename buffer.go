@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-// Buffer type implements wrapper to easy marshalling & unmarshalling binary data.
+// Buffer type implements wrapper to easy marshalling & unmarshalling binary data into byte strings.
 // Defines some method to get info about stored data and marshaling/unmarshalling helpers.
 type Buffer struct {
 	buffer *bytes.Buffer
@@ -156,7 +156,7 @@ func (x *Buffer) WriteInt32(data int32) (int, error) {
 // It uses big-endian byte order.
 // Returns nil or error.
 func (x *Buffer) ReadInt32(target *int32) error {
-	v, err := Int32(x.buffer.Next(Unt32size))
+	v, err := Int32(x.buffer.Next(Int32size))
 	if err != nil {
 		return err
 	}

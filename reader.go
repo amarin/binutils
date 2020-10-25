@@ -13,9 +13,9 @@ type BinaryReader struct {
 	source io.Reader
 }
 
-// OpenBinaryReader opens specified file path and returns BinaryReader wrapping it.
+// OpenFile opens specified file path and returns BinaryReader wrapping it.
 // Target filePath must exists and readable before opening.
-func OpenBinaryReader(filePath string) (*BinaryReader, error) {
+func OpenFile(filePath string) (*BinaryReader, error) {
 	if absFileName, err := filepath.Abs(filePath); err != nil {
 		return nil, err
 	} else if source, err := os.Open(absFileName); err != nil {
@@ -218,12 +218,15 @@ func (r BinaryReader) ReadBytes(stop byte) ([]byte, error) {
 	// underlying reader does not implement read bytes until stop,
 	// so read byte-by-byte and compare next ones until stop byte found or any read error happened.
 	buffer := make([]byte, 0)
+
 	for {
 		currentByte, err := r.ReadUint()
 		if err != nil {
 			return buffer, err
 		}
+
 		buffer = append(buffer, byte(currentByte))
+
 		if byte(currentByte) == stop {
 			return buffer, nil
 		}
@@ -268,6 +271,7 @@ func (r BinaryReader) ReadObject(target interface{}) error {
 		if err != nil {
 			return err
 		}
+
 		return nil
 
 	default:

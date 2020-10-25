@@ -13,9 +13,9 @@ type BinaryWriter struct {
 	writer io.Writer
 }
 
-// CreateBinaryWriter creates file and wrap file writer into BinaryWriter.
+// CreateFile creates file and wrap file writer into BinaryWriter.
 // Target file will created.
-func CreateBinaryWriter(filePath string) (*BinaryWriter, error) {
+func CreateFile(filePath string) (*BinaryWriter, error) {
 	if absFileName, err := filepath.Abs(filePath); err != nil {
 		return nil, err
 	} else if writer, err := os.Create(absFileName); err != nil {

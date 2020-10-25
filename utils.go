@@ -64,7 +64,7 @@ func Uint32(data []byte) (uint32, error) {
 // Int32 translates next 4 bytes from buffer into int32 value using big-endian bytes order.
 // Returns error if insufficient bytes in buffer.
 func Int32(data []byte) (int32, error) {
-	if len(data) != Unt32size {
+	if len(data) != Int32size {
 		return 0, ErrExpected4
 	}
 

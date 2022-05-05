@@ -3,7 +3,6 @@ PKG := "github.com/amarin/$(PROJECT_NAME)"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
-
 .PHONY: all dep build clean test coverage coverhtml lint tidy
 
 all: build

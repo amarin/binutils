@@ -31,6 +31,11 @@ func NewEmptyBuffer() *Buffer {
 	return &Buffer{buffer: bytes.NewBuffer(make([]byte, 0))}
 }
 
+// Write writes specified bytes into underlying buffer.
+func (x *Buffer) Write(p []byte) (n int, err error) {
+	return x.buffer.Write(p)
+}
+
 // Len returns current length of buffer data in bytes.
 func (x *Buffer) Len() int {
 	return x.buffer.Len()

@@ -108,7 +108,7 @@ func (w BinaryWriter) WriteUint32(data uint32) error {
 
 // WriteRune writes rune value into writer as uint32 bytes.
 func (w BinaryWriter) WriteRune(char rune) error {
-	bytesWritten, err := w.writer.Write(Uint32bytes(uint32(char)))
+	bytesWritten, err := w.writer.Write(RuneBytes(char))
 
 	switch {
 	case err != nil:

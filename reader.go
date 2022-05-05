@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-// BinaryWriter implements binary writing for various data types into file writer.
+// BinaryReader implements binary writing for various data types into file writer.
 type BinaryReader struct {
 	source io.Reader
 }
@@ -41,7 +41,7 @@ func (r BinaryReader) Close() error {
 	return closer.Close()
 }
 
-// Read reads up to to len(p) bytes into p. It returns the number of bytes read (0 <= n <= len(p))
+// Read reads up to len(p) bytes into p. It returns the number of bytes read (0 <= n <= len(p))
 // and any error encountered, just calling underlying io.Reader Read method.
 // Implements io.Reader itself.
 func (r BinaryReader) Read(p []byte) (n int, err error) {
@@ -151,7 +151,7 @@ func (r BinaryReader) ReadUint() (uint, error) {
 	return uint(uint64result), err
 }
 
-// ReadUint8 reads int8 value from underlying reader.
+// ReadInt8 reads int8 value from underlying reader.
 // Returns int8 value and any error encountered.
 func (r BinaryReader) ReadInt8() (int8, error) {
 	byteBuffer := AllocateBytes(Int8size)
@@ -167,7 +167,7 @@ func (r BinaryReader) ReadInt8() (int8, error) {
 	}
 }
 
-// ReadUint16 reads int16 value from underlying reader.
+// ReadInt16 reads int16 value from underlying reader.
 // Returns int16 value and any error encountered.
 func (r BinaryReader) ReadInt16() (int16, error) {
 	byteBuffer := AllocateBytes(Int16size)
@@ -183,7 +183,7 @@ func (r BinaryReader) ReadInt16() (int16, error) {
 	}
 }
 
-// ReadUint32 reads int32 value from underlying reader.
+// ReadInt32 reads int32 value from underlying reader.
 // Returns int32 value and any error encountered.
 func (r BinaryReader) ReadInt32() (int32, error) {
 	byteBuffer := AllocateBytes(Int32size)
@@ -199,7 +199,7 @@ func (r BinaryReader) ReadInt32() (int32, error) {
 	}
 }
 
-// ReadUint64 reads int64 value from underlying reader.
+// ReadInt64 reads int64 value from underlying reader.
 // Returns int64 value and any error encountered.
 func (r BinaryReader) ReadInt64() (int64, error) {
 	byteBuffer := AllocateBytes(Int64size)
@@ -270,7 +270,7 @@ func (r BinaryReader) ReadHex(amount int) (string, error) {
 	return hex.EncodeToString(data), nil
 }
 
-// WriteObject add encoding.BinaryMarshaler binary data into buffer.
+// ReadObject reads object data from underlying io.Reader.
 // Returns written bytes count and possible error.
 func (r BinaryReader) ReadObject(target interface{}) error {
 	switch binaryReaderFrom := target.(type) {

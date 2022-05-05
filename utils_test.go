@@ -455,3 +455,56 @@ func TestStringBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestRune(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		value     rune
+		hex       string
+		wantError bool
+	}{
+		{"latin_a", 'a', "00000061", false},
+		{"latin_Z", 'Z', "0000005a", false},
+		{"cyrillic_a", 'а', "00000430", false},
+		{"cyrillic_YA", 'Я', "0000042f", false},
+		{"chinese_one", '一', "00004e00", false},
+		{"chinese_ai", '爱', "00007231", false},
+		{"insufficient_bytes_caused_error", '-', "7fffff", true},
+		{"extra_bytes_caused_error", '-', "7fffffffff", true},
+	} {
+		tt := tt // pin tt
+		t.Run(tt.name, func(t *testing.T) {
+			tt := tt // pin tt
+			if data, err := hex.DecodeString(tt.hex); err != nil {
+				t.Errorf("cannt decode string %#v to bytes: %v", tt.hex, err)
+			} else if got, err := Rune(data); (err != nil) != tt.wantError {
+				t.Errorf("Rune(%v) = %v, %v, want error %v", tt.hex, got, err, tt.wantError)
+			} else if err == nil && got != tt.value {
+				t.Errorf("Rune(%v) = %v expect %v(%08x)", tt.hex, got, string(tt.value), tt.value)
+			}
+		})
+	}
+}
+
+func TestRuneBytes(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		value rune
+		hex   string
+	}{
+		{"latin_a", 'a', "00000061"},
+		{"latin_Z", 'Z', "0000005a"},
+		{"cyrillic_a", 'а', "00000430"},
+		{"cyrillic_YA", 'Я', "0000042f"},
+		{"chinese_one", '一', "00004e00"},
+		{"chinese_ai", '爱', "00007231"},
+	} {
+		tt := tt // pin tt
+		t.Run(tt.name, func(t *testing.T) {
+			tt := tt // pin tt
+			if got := RuneBytes(tt.value); hex.EncodeToString(got) != tt.hex {
+				t.Errorf("RuneBytes() = %v, want %v", hex.EncodeToString(got), tt.hex)
+			}
+		})
+	}
+}

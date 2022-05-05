@@ -61,6 +61,16 @@ func Uint32(data []byte) (uint32, error) {
 	return binary.BigEndian.Uint32(data), nil
 }
 
+// Rune translates specified 4 bytes into rune value using big-endian bytes order.
+// Returns error if insufficient bytes supplied.
+func Rune(data []byte) (rune, error) {
+	if len(data) != RuneSize {
+		return 0, ErrExpected4
+	}
+
+	return Int32(data)
+}
+
 // Int32 translates next 4 bytes from buffer into int32 value using big-endian bytes order.
 // Returns error if insufficient bytes in buffer.
 func Int32(data []byte) (int32, error) {
@@ -125,6 +135,14 @@ func Uint32bytes(data uint32) []byte {
 func Int32bytes(data int32) []byte {
 	d := AllocateBytes(Uint32size)
 	binary.BigEndian.PutUint32(d, uint32(data))
+
+	return d
+}
+
+// RuneBytes returns rune bytes representation using big-endian bytes order.
+func RuneBytes(char rune) []byte {
+	d := AllocateBytes(RuneSize)
+	binary.BigEndian.PutUint32(d, uint32(char))
 
 	return d
 }

@@ -22,14 +22,14 @@ type untilStopByteReader interface {
 // The return value n is the number of bytes taken from reader.
 // Any error except io.EOF encountered during the read is also returned.
 type BinaryReaderFrom interface {
-	BinaryReadFrom(BinaryReader) (n int64, err error)
+	BinaryReadFrom(*BinaryReader) (n int64, err error)
 }
 
 // BinaryWriterTo is the interface that wraps the BinaryWriteTo method.
 //
 // BinaryWriteTo writes implementors data into writer until marshalled or any error occurs.
 // The return value n is the number of bytes
-// written. Any error encountered during the write is also returned.
+// written. Any error encountered during writing is also returned.
 type BinaryWriterTo interface {
-	BinaryWriteTo(BinaryWriter) (n int64, err error)
+	BinaryWriteTo(*BinaryWriter) (n int64, err error)
 }

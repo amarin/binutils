@@ -14,7 +14,7 @@ type BinaryReader struct {
 }
 
 // OpenFile opens specified file path and returns BinaryReader wrapping it.
-// Target filePath must exists and readable before opening.
+// Target filePath must be existed and readable before opening.
 func OpenFile(filePath string) (*BinaryReader, error) {
 	if absFileName, err := filepath.Abs(filePath); err != nil {
 		return nil, err
@@ -272,7 +272,7 @@ func (r BinaryReader) ReadHex(amount int) (string, error) {
 
 // ReadObject reads object data from underlying io.Reader.
 // Returns written bytes count and possible error.
-func (r BinaryReader) ReadObject(target interface{}) error {
+func (r *BinaryReader) ReadObject(target interface{}) error {
 	switch binaryReaderFrom := target.(type) {
 	case BinaryReaderFrom:
 		_, err := binaryReaderFrom.BinaryReadFrom(r)

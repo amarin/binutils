@@ -112,6 +112,22 @@ func (r BinaryReader) ReadUint32() (uint32, error) {
 	}
 }
 
+// ReadRune reads rune value from underlying io.Reader.
+// Returns rune value and any error encountered.
+func (r BinaryReader) ReadRune() (rune, error) {
+	byteBuffer := AllocateBytes(RuneSize)
+	bytesRead, err := r.source.Read(byteBuffer)
+
+	switch {
+	case err != nil:
+		return 0, err
+	case bytesRead != RuneSize:
+		return 0, fmt.Errorf("%w: expected %v read %v", io.ErrUnexpectedEOF, Uint32size, bytesRead)
+	default:
+		return Rune(byteBuffer)
+	}
+}
+
 // ReadUint64 reads uint64 value from underlying reader.
 // Returns uint64 value and any error encountered.
 func (r BinaryReader) ReadUint64() (uint64, error) {

@@ -106,6 +106,22 @@ func (w BinaryWriter) WriteUint32(data uint32) error {
 	return nil
 }
 
+// WriteRune writes rune value into writer as uint32 bytes.
+func (w BinaryWriter) WriteRune(char rune) error {
+	bytesWritten, err := w.writer.Write(Uint32bytes(uint32(char)))
+
+	switch {
+	case err != nil:
+		return fmt.Errorf("%v: rune: %w", ErrWriterWrite, err)
+	case bytesWritten != RuneSize:
+		return fmt.Errorf(
+			"%v: %w: expected %v written %v",
+			ErrWriter, io.ErrShortWrite, RuneSize, bytesWritten)
+	}
+
+	return nil
+}
+
 // WriteUint64 writes uint64 value into writer as bytes.
 func (w BinaryWriter) WriteUint64(data uint64) error {
 	bytesWritten, err := w.writer.Write(Uint64bytes(data))

@@ -339,7 +339,7 @@ func (w *BinaryWriter) WriteObject(data interface{}) (err error) {
 	case io.WriterTo:
 		n, err = binaryObject.WriteTo(w)
 	case BinaryWriterTo:
-		n, err = binaryObject.BinaryWriteTo(w)
+		err = binaryObject.BinaryWriteTo(w)
 	case BinaryUint8:
 		err = w.WriteUint8(binaryObject.Uint8())
 	case BinaryUint16:

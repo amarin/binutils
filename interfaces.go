@@ -28,10 +28,9 @@ type BinaryReaderFrom interface {
 // BinaryWriterTo interface wraps the BinaryWriteTo method.
 // Implementation method BinaryWriteTo writes implementors data into BinaryWriter
 // until all marshalled or any error occurs.
-// The return value n is the number of bytes written into BinaryWriter.
-// Any error encountered during writing is also returned.
+// Returns any error encountered during writing if happened or nil.
 type BinaryWriterTo interface {
-	BinaryWriteTo(*BinaryWriter) (n int64, err error)
+	BinaryWriteTo(*BinaryWriter) error
 }
 
 // BinaryUint8 requires implementation could translate its value to uint8 type.

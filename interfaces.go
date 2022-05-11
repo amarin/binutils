@@ -1,11 +1,5 @@
 package binutils
 
-// BufferUnmarshaler requires interface implementations provides method to unmarshal itself from Buffer.
-// Such objects should read only own bytes from buffer leaving extra bytes intact for others.
-type BufferUnmarshaler interface {
-	UnmarshalFromBuffer(*Buffer) error
-}
-
 type untilStopByteReader interface {
 	// ReadBytes until the first occurrence of stopByte in the input,
 	// returning a slice containing the data up to and including the delimiter.

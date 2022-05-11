@@ -1,6 +1,7 @@
 package binutils
 
 import (
+	"encoding"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -47,6 +48,12 @@ func (w *BinaryWriter) ResetBytesWritten() {
 	w.mu.Unlock()
 }
 
+func (w *BinaryWriter) increaseBytesWritten(addBytesCount int) {
+	w.mu.Lock()
+	w.bytesWritten += addBytesCount
+	w.mu.Unlock()
+}
+
 // CreateFile creates file and wrap file writer into BinaryWriter.
 // Target file will be created.
 func CreateFile(filePath string) (*BinaryWriter, error) {
@@ -75,245 +82,95 @@ func (w BinaryWriter) Close() error {
 // Write simply writes into underlying writer.
 // Note it extends internal written bytes counter to written bytes value.
 // Implements io.Writer.
-func (w *BinaryWriter) Write(p []byte) (n int, err error) {
+func (w *BinaryWriter) Write(p []byte) (bytesWritten int, err error) {
 	w.mu.Lock()
-	n, err = w.writer.Write(p)
-	w.bytesWritten += n
+	bytesWritten, err = w.writer.Write(p)
+	w.bytesWritten += bytesWritten
 	w.mu.Unlock()
 
-	return n, err
+	switch {
+	case err != nil:
+		return bytesWritten, fmt.Errorf("%v: uint8: %w", ErrWriterWrite, err)
+	case bytesWritten != len(p):
+		return bytesWritten, fmt.Errorf(
+			"%v: %w: expected %v written %v",
+			ErrWriter, io.ErrShortWrite, len(p), bytesWritten)
+	}
+
+	return bytesWritten, err
+}
+
+// write wraps Write returning only error. Counts written bytes internally.
+func (w *BinaryWriter) write(p []byte) (err error) {
+	_, err = w.Write(p)
+
+	return err
 }
 
 // WriteUint8 writes uint8 value into writer as bytes.
 func (w *BinaryWriter) WriteUint8(data uint8) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Uint8bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: uint8: %w", ErrWriterWrite, err)
-	case bytesWritten != Uint8size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Uint8size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Uint8bytes(data))
 }
 
 // WriteUint16 writes uint16 value into writer as bytes.
 func (w *BinaryWriter) WriteUint16(data uint16) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Uint16bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: uint16: %w", ErrWriterWrite, err)
-	case bytesWritten != Uint16size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Uint16size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Uint16bytes(data))
 }
 
 // WriteUint32 writes uint16 value into writer as bytes.
 func (w *BinaryWriter) WriteUint32(data uint32) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Uint32bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: uint32: %w", ErrWriterWrite, err)
-	case bytesWritten != Uint32size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Uint32size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Uint32bytes(data))
 }
 
 // WriteRune writes rune value into writer as uint32 bytes.
 func (w *BinaryWriter) WriteRune(char rune) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(RuneBytes(char))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: rune: %w", ErrWriterWrite, err)
-	case bytesWritten != RuneSize:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, RuneSize, bytesWritten)
-	}
-
-	return nil
+	return w.write(RuneBytes(char))
 }
 
 // WriteUint64 writes uint64 value into writer as bytes.
 func (w *BinaryWriter) WriteUint64(data uint64) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Uint64bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: uint64: %w", ErrWriterWrite, err)
-	case bytesWritten != Uint64size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Uint64size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Uint64bytes(data))
 }
 
 // WriteUint uint value into writer as bytes.
 func (w *BinaryWriter) WriteUint(data uint) (err error) {
-	return w.WriteUint64(uint64(data))
+	return w.write(Uint64bytes(uint64(data)))
 }
 
 // WriteInt8 writes int8 value into writer as byte.
 func (w *BinaryWriter) WriteInt8(data int8) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Int8bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: int8: %w", ErrWriterWrite, err)
-	case bytesWritten != Int8size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Int8size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Int8bytes(data))
 }
 
 // WriteInt16 writes int16 value into writer as bytes.
 func (w *BinaryWriter) WriteInt16(data int16) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Int16bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: int16: %w", ErrWriterWrite, err)
-	case bytesWritten != Int16size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Int16size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Int16bytes(data))
 }
 
 // WriteInt32 writes int32 value into writer as bytes.
 func (w *BinaryWriter) WriteInt32(data int32) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Int32bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: int32: %w", ErrWriterWrite, err)
-	case bytesWritten != Int32size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Int32size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Int32bytes(data))
 }
 
 // WriteInt64 writes int64 value into writer as bytes.
 func (w *BinaryWriter) WriteInt64(data int64) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(Int64bytes(data))
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: int64: %w", ErrWriterWrite, err)
-	case bytesWritten != Int64size:
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, Int64size, bytesWritten)
-	}
-
-	return nil
+	return w.write(Int64bytes(data))
 }
 
 // WriteInt int value into writer as bytes.
 func (w *BinaryWriter) WriteInt(data int) error {
-	return w.WriteInt64(int64(data))
+	return w.write(Int64bytes(int64(data)))
 }
 
 // WriteStringZ writes string bytes into underlying writer as Zero-terminated string.
 func (w *BinaryWriter) WriteStringZ(data string) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	stringBytes := StringBytes(data)
-	bytesWritten, err := w.writer.Write(stringBytes)
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: stringZ: %w", ErrWriterWrite, err)
-	case bytesWritten != len(stringBytes):
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, len(stringBytes), bytesWritten)
-	}
-
-	return nil
+	return w.write(StringBytes(data))
 }
 
 // WriteBytes writes byte string into underlying writer.
 // Returns error if written bytes count mismatch specified byte string length or any underlying error if occurs.
 func (w *BinaryWriter) WriteBytes(data []byte) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	bytesWritten, err := w.writer.Write(data)
-	w.bytesWritten += bytesWritten
-
-	switch {
-	case err != nil:
-		return fmt.Errorf("%v: %w", ErrWriterWrite, err)
-	case bytesWritten != len(data):
-		return fmt.Errorf(
-			"%v: %w: expected %v written %v",
-			ErrWriter, io.ErrShortWrite, len(data), bytesWritten)
-	}
-
-	return nil
+	return w.write(data)
 }
 
 // WriteHex adds byte string defined by hex string into writer.
@@ -323,54 +180,122 @@ func (w *BinaryWriter) WriteHex(hexString string) error {
 		return fmt.Errorf("%v: %v: hex: %w", ErrWriter, ErrDecodeTo, err)
 	}
 
-	return w.WriteBytes(data)
+	return w.write(data)
 }
 
 // WriteObject writes object data into underlying writer.
-// Specified data could be one of io.WriterTo, BinaryWriterTo, BinaryUint8, BinaryUint16, BinaryUint32, BinaryUint64,
+// User specified data types data must be one of io.WriterTo, BinaryWriterTo, BinaryUint8, BinaryUint16, BinaryUint32, BinaryUint64,
 // BinaryInt8, BinaryInt16, BinaryInt32, BinaryInt64 or BinaryRune interface implementation.
+// Basic Int[8-64], Uint[8-64] or pointers to it are simply generates bigEndian bytes.
+//
 // If multiple interfaces implemented first of described order will be used.
 // Use required method directly to fully determined behaviour.
 // Returns error if caused internally. To get written bytes counter use BytesWritten result.
 func (w *BinaryWriter) WriteObject(data interface{}) (err error) {
 	n := int64(0)
 
-	switch binaryObject := data.(type) {
+	switch typedValue := data.(type) {
 	case io.WriterTo:
-		n, err = binaryObject.WriteTo(w)
+		n, err = typedValue.WriteTo(w)
+		w.increaseBytesWritten(int(n))
+	case encoding.BinaryMarshaler:
+		var binaryData []byte
+		if binaryData, err = typedValue.MarshalBinary(); err != nil {
+			return fmt.Errorf("%w: marshal: %v", Error, err)
+		}
+
+		return w.write(binaryData)
 	case BinaryWriterTo:
-		err = binaryObject.BinaryWriteTo(w)
-	case BinaryUint8:
-		err = w.WriteUint8(binaryObject.Uint8())
-	case BinaryUint16:
-		err = w.WriteUint16(binaryObject.Uint16())
-	case BinaryUint32:
-		err = w.WriteUint32(binaryObject.Uint32())
-	case BinaryUint64:
-		err = w.WriteUint64(binaryObject.Uint64())
-	case BinaryInt8:
-		err = w.WriteInt8(binaryObject.Int8())
-	case BinaryInt16:
-		err = w.WriteInt16(binaryObject.Int16())
-	case BinaryInt32:
-		err = w.WriteInt32(binaryObject.Int32())
-	case BinaryInt64:
-		err = w.WriteInt64(binaryObject.Int64())
-	case BinaryRune:
-		err = w.WriteRune(binaryObject.Rune())
-	case BinaryString:
-		err = w.WriteStringZ(binaryObject.BinaryString())
+		return typedValue.BinaryWriteTo(w)
+	case uint8:
+		return w.WriteUint8(typedValue)
+	case *uint8:
+		if typedValue == nil {
+			return fmt.Errorf("%w: uint8", ErrNilPointer)
+		}
+		return w.WriteUint8(*typedValue)
+	case uint16:
+		return w.WriteUint16(typedValue)
+	case *uint16:
+		if typedValue == nil {
+			return fmt.Errorf("%w: uint16", ErrNilPointer)
+		}
+		return w.WriteUint16(*typedValue)
+	case uint32:
+		return w.WriteUint32(typedValue)
+	case *uint32:
+		if typedValue == nil {
+			return fmt.Errorf("%w: uint32", ErrNilPointer)
+		}
+		return w.WriteUint32(*typedValue)
+	case uint64:
+		return w.WriteUint64(typedValue)
+	case *uint64:
+		if typedValue == nil {
+			return fmt.Errorf("%w: uint64", ErrNilPointer)
+		}
+		return w.WriteUint64(*typedValue)
+	case uint:
+		return w.WriteUint(typedValue)
+	case *uint:
+		if typedValue == nil {
+			return fmt.Errorf("%w: uint", ErrNilPointer)
+		}
+		return w.WriteUint(*typedValue)
+	case int8:
+		return w.WriteInt8(typedValue)
+	case *int8:
+		if typedValue == nil {
+			return fmt.Errorf("%w: int8", ErrNilPointer)
+		}
+		return w.WriteInt8(*typedValue)
+	case int16:
+		return w.WriteInt16(typedValue)
+	case *int16:
+		if typedValue == nil {
+			return fmt.Errorf("%w: int16", ErrNilPointer)
+		}
+		return w.WriteInt16(*typedValue)
+	case int32:
+		return w.WriteInt32(typedValue)
+	case *int32:
+		if typedValue == nil {
+			return fmt.Errorf("%w: int32", ErrNilPointer)
+		}
+		return w.WriteInt32(*typedValue)
+	case int64:
+		return w.WriteInt64(typedValue)
+	case *int64:
+		if typedValue == nil {
+			return fmt.Errorf("%w: int64", ErrNilPointer)
+		}
+		return w.WriteInt64(*typedValue)
+	case int:
+		return w.WriteInt(typedValue)
+	case *int:
+		if typedValue == nil {
+			return fmt.Errorf("%w: int", ErrNilPointer)
+		}
+		return w.WriteInt(*typedValue)
+	case string:
+		return w.WriteStringZ(typedValue)
+	case *string:
+		if typedValue == nil {
+			return fmt.Errorf("%w: string", ErrNilPointer)
+		}
+		return w.WriteStringZ(*typedValue)
+	case []uint8: // cover []byte
+		return w.WriteBytes(typedValue)
+	case *[]uint8:
+		if typedValue == nil {
+			return fmt.Errorf("%w: []byte", ErrNilPointer)
+		}
+		return w.WriteBytes(*typedValue)
 	default:
 		return fmt.Errorf(
-			"%w: should implement io.WriterTo, binutils.BinaryWriterTo or any Binary<Type> interface",
-			ErrWriterWrite,
+			"%w: %T should implement io.WriterTo, binutils.BinaryWriterTo or any Binary<Type> interface",
+			ErrWriterWrite, typedValue,
 		)
-	}
-
-	if n != 0 {
-		w.mu.Lock()
-		w.bytesWritten += int(n)
-		w.mu.Unlock()
 	}
 
 	if err != nil {

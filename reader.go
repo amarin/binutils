@@ -329,9 +329,7 @@ func (r *BinaryReader) ReadObject(target interface{}) error {
 		*tgtType = receivedValue
 		return err
 	case BinaryReaderFrom:
-		bytesTaken, err := tgtType.BinaryReadFrom(r)
-		r.increaseBytesTaken(int(bytesTaken))
-		if err != nil {
+		if err := tgtType.BinaryReadFrom(r); err != nil {
 			return err
 		}
 

@@ -13,10 +13,9 @@ type untilStopByteReader interface {
 // BinaryReaderFrom interface wraps the BinaryReadFrom method.
 // Implementation method BinaryReadFrom reads implementors data from BinaryReader
 // until its data restored or any error encountered.
-// The return value n is the number of bytes taken from reader.
-// Any error except io.EOF encountered during the read is also returned.
+// Returns any error encountered during reading if happened or nil.
 type BinaryReaderFrom interface {
-	BinaryReadFrom(*BinaryReader) (n int64, err error)
+	BinaryReadFrom(*BinaryReader) error
 }
 
 // BinaryWriterTo interface wraps the BinaryWriteTo method.
